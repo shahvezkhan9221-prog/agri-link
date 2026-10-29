@@ -137,7 +137,7 @@ export function LoginScreen() {
     try {
       const { user } = await signInWithEmailAndPassword(auth, loginEmail, loginPassword)
       if (user.emailVerified) {
-        router.push('/')
+        window.location.assign('/')
       } else {
         setError('Please verify your email before logging in. Check your inbox.')
         setLoading(false)
@@ -150,18 +150,29 @@ export function LoginScreen() {
 
   async function handleGoogle() {
     setError('')
+    setLoading(true)
     try {
       const { user } = await signInWithPopup(auth, new GoogleAuthProvider())
-      const snap = await getDoc(doc(db, 'users', user.uid))
-      if (snap.exists()) {
-        router.push('/')
+      let hasProfile = false
+
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid))
+        hasProfile = snap.exists()
+      } catch {
+        // Authentication succeeded; profile permissions can be repaired separately.
+      }
+
+      if (hasProfile) {
+        window.location.assign('/')
       } else {
         setGoogleName(user.displayName ?? '')
         setGoogleEmail(user.email ?? '')
         setMode('complete-profile')
+        setLoading(false)
       }
     } catch (err) {
       setError(messageOf(err))
+      setLoading(false)
     }
   }
 
